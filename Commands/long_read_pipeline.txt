@@ -1,0 +1,33 @@
+# long read data variant calling
+
+# merge fastq files per sample
+grun -n merge_${sample} zcat $(ls *.fastq.gz) '|' gzip '>' ${sample}_combined.fastq.gz
+
+# align to T2T reference
+minimap2 -ax map-hifi ${t2t}.fna -p 0.95 --secondary=yes -N 1 -a -L -eqx --MD ${sample}_combined.fastq.gz '>' ${sample}_t2t.sam
+
+# convert to BAM, sort, index
+samtools sort ${sample}_t2t.sam -o ${sample}_t2t_sorted.bam
+samtools index ${sample}_t2t_sorted.bam
+
+# SNP calling with mapping quality 50, base quality 20
+freebayes -f ${t2t}.fna -p 1 --min-mapping-quality 50 --min-base-quality 20 --no-indels --no-mnps --no-complex -r NC_060948.1 ${sample}_t2t_sorted.bam '>' ${sample}_t2t_sorted_freebayes.vcf
+
+# define positions that are polymorphic within samples into $targets
+# 1) merge all files
+bcftools merge <list all vcf files here> --force-samples -o merged_samples.vcf
+# 2) list positions
+awk '!/^#/ {print "NC_060948.1", $2-1, $2}' merged_samples.vcf > $targets
+
+# call target positions for each sample (including non-polymorphic sites)
+freebayes -f ${t2t}.fna -p 1 --min-mapping-quality 50 --min-base-quality 20 --no-indels --no-mnps --no-complex --report-monomorphic -t $targets ${sample}_t2t_sorted.bam '>' ${sample}_t2t_sorted_targets.vcf
+
+# filter vcf output by QUAL
+bgzip -c ${sample}_t2t_sorted_targets.vcf > ${sample}_t2t_sorted_targets.vcf.gz
+tabix ${sample}_t2t_sorted_targets.vcf.gz
+bcftools view -i 'QUAL>=20' ${sample}_t2t_sorted_targets.vcf.gz -Oz -o ${sample}_t2t_sorted_targets_QUAL20.vcf.gz
+
+# keep only XTR, XDR, AMP regions defined in $msy_regions (suppelementary table S4)
+# remove repetitive regions defined in $repetitive_regions (suppelementary table S5)
+tabix ${sample}_t2t_sorted_targets_QUAL20.vcf.gz
+bcftools view -R $msy_regions -T $repetitive_regions ${sample}_t2t_sorted_targets_QUAL20.vcf.gz -o ${sample}_t2t_sorted_targets_QUAL20_msy.vcf
