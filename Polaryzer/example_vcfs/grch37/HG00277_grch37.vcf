@@ -1,8 +1,8 @@
 ##fileformat=VCFv4.2
 ##FILTER=<ID=PASS,Description="All filters passed">
 ##bcftoolsVersion=1.20+htslib-1.20
-##bcftoolsCommand=mpileup -Ou -q 50 -Q 20 -r NC_000024.9 -f /mnt/ngs/scratch_areas/nxd426/Y_sequencing/Reference_GRCh37_Indexed/ncbi-genomes-2022-01-07/GCF_000001405.25_GRCh37.p13_genomic.fna ./HG00277_merged_sorted_RG_duprmv_BQSR_grch37.bam
-##reference=file:///mnt/ngs/scratch_areas/nxd426/Y_sequencing/Reference_GRCh37_Indexed/ncbi-genomes-2022-01-07/GCF_000001405.25_GRCh37.p13_genomic.fna
+##bcftoolsCommand=mpileup -Ou -q 50 -Q 20 -r NC_000024.9 -f /GCF_000001405.25_GRCh37.p13_genomic.fna ./HG00277_merged_sorted_RG_duprmv_BQSR_grch37.bam
+##reference=file:///ncbi-genomes-2022-01-07/GCF_000001405.25_GRCh37.p13_genomic.fna
 ##contig=<ID=NC_000001.10,length=249250621>
 ##contig=<ID=NT_113878.1,length=106433>
 ##contig=<ID=NT_167207.1,length=547496>
@@ -325,7 +325,7 @@
 ##INFO=<ID=HWE,Number=1,Type=Float,Description="Chi^2 based HWE test P-value based on G3">
 ##INFO=<ID=DP4,Number=4,Type=Integer,Description="Number of high-quality ref-forward , ref-reverse, alt-forward and alt-reverse bases">
 ##bcftools_callVersion=1.20+htslib-1.20
-##bcftools_callCommand=call -v --ploidy 1 -O v -o /mnt/ngs/projects/y_chromosome_3552/users/nxd426/Y_Reference_project_1KGP/vcfs//HG00277_grch37.vcf -c; Date=Thu Oct 24 20:07:48 2024
+##bcftools_callCommand=call -v --ploidy 1 -O v -o /HG00277_grch37.vcf -c; Date=Thu Oct 24 20:07:48 2024
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	1KGP
 NC_000024.9	2672735	.	atttttttttttttt	attttttttttttt	9.04412	.	INDEL;IDV=2;IMF=1;DP=2;VDB=0.36;SGB=-0.453602;MQSBZ=0;BQBZ=-1.41421;MQ0F=0;AF1=1;AC1=1;DP4=0,0,1,1;MQ=60;FQ=-999	GT:PL	1:46,6,0
 NC_000024.9	2816309	.	G	A	47.005	.	DP=3;VDB=0.172729;SGB=-0.511536;MQSBZ=0;MQ0F=0;AF1=1;AC1=1;DP4=0,0,1,2;MQ=60;FQ=-999	GT:PL	1:77,0
