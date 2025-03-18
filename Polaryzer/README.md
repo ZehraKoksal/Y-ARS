@@ -14,61 +14,53 @@ python polarYzer.py -h
 
 ### 2) Requirements and Commands
 Polaryzer is written using python and requires a small set of packages that can be installed in a new virtual environment. 
+Make sure to use a newer version of python to avoid problems with the package pyarrow. We recommend python 3.11.11.
 
 In a (linux) command line you can run the following commands:
 ```
-python3 -m venv Y_is_fun
+python3.11 -m venv Y_is_fun
 source Y_is_fun/bin/activate
 pip install numpy
 pip install cyvcf2
 pip install pandas
 pip install pysam
+pip install pyarrow
 ```
+The following versions of the packages are used:
+numpy v2.2.4, cyvcf2 v0.31.1, pandas v2.2.3, pysam v0.23.0, pyarrow v19.0.1
+
 Now the environment is prepared to run polaryzer!
 
 ### 3) Run polaryzer
 Polaryzer can be applied to single sample vcf files and multisample vcf files. The first results in an annotated vcf file with the polarization (ancestral/derived) in the ID column. For the latter, a tab-separated .csv file is generated with samples in columns and loci in rows.
 
 #### a) Single sample vcf input file
-When running polaryzer on single sample vcf files, the user needs to specify the exact name of the Y chromosome used in the CHR column of the vcf file using parameter **-chromosome**
+When running polaryzer on single sample vcf files, the user needs to specify the exact name of the Y chromosome used in the CHR column of the vcf file using parameter **-chromosome**, defining the reference sequence for alignment/in SNP array among GRCh37, GRCh38 or T2T following **-reference**. Define the path to the folder containing all .vcf files following parameter **-input_single_vcf**.
+
+```
+python polarYzer.py -chromosome NC_060948.1 -reference T2T -input_single_vcf vcf_T2T_test/
+```
+Optionally, the parameter **-output_loci_dict** can be added to obtain a tab-separated csv file containing all loci and the ancestral and derived allele information over all vcf files.
 ```
 python polarYzer.py -chromosome NC_060948.1 -reference T2T -input_single_vcf vcf_T2T_test/ -output_loci_dict
 ```
 
+The single sample vcf file mode is run in parallel mode to reduce computing time.
+
 #### b) Multisample vcf file
+When running polaryzer on **one** multiple sample vcf file, the user needs to specify the exact name of the Y chromosome used in the CHR column of the vcf file using parameter **-chromosome**, defining the reference sequence for alignment/in SNP array among GRCh37, GRCh38 or T2T following **-reference**. Define the path to the vcf file following parameter **-multiple_sample_vcf**.
 ```
 python polarYzer.py -chromosome NC_060948.1 -reference T2T -multi_sample_vcf multisample_vcf_t2t.vcf
 ```
 
-SNPtotree generates the phylogenetic tree in two file formats: in a tab-separated csv file and a traditional phyloxml file.
-
-The csv output file is to be read from left to right. Downstream variants are located in the cells below and to the right. In this example variants b, d, e and f are downstream of variant a, and variant c is downstream of variant b.
-Variants in parallel branches (sister clades) within a clade are presented in a column: Variants g and h are parallel to each other. Not separable variants based on the available data are presented in one cell divided by a comma, like variants i and j.
-
-<img src="/Images/output_phyltree.png" alt="Input file style" width="700"/>
-
-The phyloxml output file contains annotated branches and nodes and can be viewed in phylogenetic tree visualization tools that support phyloxml format, e.g. the interactive Tree Of Life (iTOL). This tree contains the same information as the csv output file.
-
-<img src="/Images/output_phyloxml.png" alt="Input file style" width="900"/>
-<img src="/Images/output2_phyloxml.png" alt="Input file style" width="900"/>
-
-#### c) Additional Output File: Certainty Value File
-
-In a separate csv file, statistical support values for each variant present in the phylogenetic tree are given. The support or certainty values are the fraction of variants in the tree that support that variant's position based on their informative (=upstream/basal/rootward, downstream/terminal, parallel) pairwise relationships out of all remaining variants in the tree.
-
-<img src="/Images/certainty_values_example.png" alt="Input file style" width="400"/>
-
-In this example, the tree location of variant i is supported by informative pairwise relationships of 8 of the remaining 9 variants (8/9 = 0.88888). The ninth variant has no informative pairwise relationship to variant i. Variants with contradictory relationships are not present in the final tree, since they have been filtered out during the tree generation process.
-
-#### d) Optional Output Files:
-
-**metadata_individuals**
+The resulting output file is a tab-separated .csv file with loci being different rows, and the samples different columns. 
 
 
-In t
 
-<img src="/Images/output_phyltree_metadata.png" alt="Input file style" width="700"/>
 
+#### c) Example files
+
+Different test vcf files from the 1000 Genomes Project for inputs in the **single sample vcf file mode** of the three reference genomes are available in the [subfolder example_vcfs] (https://github.com/ZehraKoksal/Y-ARS/tree/main/Polaryzer/example_vcfs)
 
 
 
