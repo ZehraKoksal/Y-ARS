@@ -47,7 +47,7 @@ python polarYzer.py -chromosome NC_060948.1 -reference T2T -input_single_vcf vcf
 
 The single sample vcf file mode is run in parallel mode to reduce computing time.
 
-#### b) Multisample vcf file
+#### b) Multi sample vcf input file
 When running polaryzer on **one** multiple sample vcf file, the user needs to specify the exact name of the Y chromosome used in the CHR column of the vcf file using parameter **-chromosome**, defining the reference sequence for alignment/in SNP array among GRCh37, GRCh38 or T2T following **-reference**. Define the path to the vcf file following parameter **-multiple_sample_vcf**.
 ```
 python polarYzer.py -chromosome NC_060948.1 -reference T2T -multi_sample_vcf multisample_vcf_t2t.vcf
@@ -60,7 +60,7 @@ The resulting output file is a tab-separated .csv file with loci being different
 
 #### c) Example files
 
-Different test vcf files from the 1000 Genomes Project for inputs in the **single sample vcf file mode** of the three reference genomes are available in the [subfolder example_vcfs] (https://github.com/ZehraKoksal/Y-ARS/tree/main/Polaryzer/example_vcfs)
+Different test vcf files from the 1000 Genomes Project for inputs in the **single sample vcf file mode** of the three reference genomes are available in the [subfolder example_vcfs](https://github.com/ZehraKoksal/Y-ARS/tree/main/Polaryzer/example_vcfs)
 
 
 
