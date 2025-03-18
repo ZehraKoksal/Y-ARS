@@ -24,19 +24,21 @@ pip install cyvcf2
 pip install pandas
 pip install pysam
 ```
+Now the environment is prepared to run polaryzer!
 
 ### 3) Run polaryzer
+Polaryzer can be applied to single sample vcf files and multisample vcf files. The first results in an annotated vcf file with the polarization (ancestral/derived) in the ID column. For the latter, a tab-separated .csv file is generated with samples in columns and loci in rows.
 
-#### a) Input file
-The user is required to provide the path to the input file in the _.csv_ format. The input file contains the ancestral **A** or derived **D** allelic state or missing information **X** for each **_polymorphic variant_** in a tab-separated format. The rows present variants, the columns individuals.
-The header row should present the individuals' labels and the first (index) column the variant names.
+#### a) Single sample vcf input file
+When running polaryzer on single sample vcf files, the user needs to specify the exact name of the Y chromosome used in the CHR column of the vcf file using parameter **-chromosome**
+```
+python polarYzer.py -chromosome NC_060948.1 -reference T2T -input_single_vcf vcf_T2T_test/ -output_loci_dict
+```
 
-<img src="/Images/inputfile_snptotree.png" alt="Input file style" width="700"/>
-
-The allelic states "ancestral" and "derived" of the most used model organisms are reported in public repositories. For novel SNPs or for not well investigated organisms without already reported relevant SNP information, the ancestral and derived allelic states have to be identified by the user. The ancestral allele is found in a common ancestor of the group of analysed individuals. Thus, it is helpful to conduct sequence alignments to a common ancestor rather than an arbitrarily selected reference genome, e.g. GRCh38 for humans.
-
-
-#### b) Main Output Files: Phylogenetic Tree
+#### b) Multisample vcf file
+```
+python polarYzer.py -chromosome NC_060948.1 -reference T2T -multi_sample_vcf multisample_vcf_t2t.vcf
+```
 
 SNPtotree generates the phylogenetic tree in two file formats: in a tab-separated csv file and a traditional phyloxml file.
 
@@ -63,28 +65,20 @@ In this example, the tree location of variant i is supported by informative pair
 **metadata_individuals**
 
 
-In the metadata output file, the individuals presented in each row correspond to the respective row of the phylogenetic tree (tree layer). The variants in each tree layer were observed in the sequences of the respective metadata output row. In this example, variant a was found in all individuals 1 to 10, and variant b was only found in individuals 2, 3 and 4. Variants that could not be separated into different branches were represented in one tree layer (like variants i and j). In this case, the sequences corresponding to this tree layer (individuals 11 and 12) were each found in at least one of the variants (i and j).
+In t
 
 <img src="/Images/output_phyltree_metadata.png" alt="Input file style" width="700"/>
 
 
-**contradictory_variants**
-
-For certain variants - including those resulting from sequencing errors, recurrent mutations or backmutations - variants with contradictory pairwise hierarchical relationships are ignored for the tree generation, but saved as "contradictory variants". 
-
-**ambiguous_variants**
-
-Based on the pairwise relationships, the final hierarchical order of the variants is established.
-For some variants, an explicit position in the tree could not be determined. These variants have ambiguous positions in the tree.
 
 
 ### 4) Additional Information and Contact
-More information on the software are available in [our publication:](https://www.mdpi.com/2073-4425/14/10/1837)
+More information on the software are available in [our publication:]()
 
-For reporting bugs, comments or questions, you are welcome to contact zehra.koksal@sund.ku.dk.
+For reporting bugs, comments or questions, you are welcome to contact zehra.koksal@liu.se
 
 ### 5) Referencing
 
 Please cite: 
-Köksal, Z.; Børsting, C.; Gusmão, L.; Pereira, V. SNPtotree—Resolving the Phylogeny of SNPs on Non-Recombining DNA. Genes 2023, 14, 1837. https://doi.org/10.3390/genes14101837
+
 
