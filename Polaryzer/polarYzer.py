@@ -1,10 +1,10 @@
-from cyvcf2 import VCF, Writer
 import argparse
 import os
 import glob
 import pandas as pd
 import pysam
 import concurrent.futures
+from multiprocessing import Manager
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-chromosome', type=str, required=True, help='Label of Y chromosome in the vcf file. Can be "chrY", "Y" or e.g. "NC_000024.9" for the GRCh37')
@@ -45,35 +45,38 @@ elif args.reference == "T2T":
     t2t[1] = t2t[1].apply(revert_delta_encoding)
     df_exploded = t2t.explode(1)
 
-def process_vcf_file(vcf_file, chromosome, df_exploded, output_dict, output_dict_anc, output_dict_der, args):
+df_exploded.columns=["anc","pos"]
+print(df_exploded)
+print(df_exploded.columns)
+
+
+def process_vcf_file(vcf_file, chromosome, position_to_ancestral, output_dict, output_dict_anc, output_dict_der, args):
     vcf_in = pysam.VariantFile(vcf_file, 'r')
     modified_filename = vcf_file.replace(".vcf", "")
     vcf_out = pysam.VariantFile(f"{modified_filename}_polarized.vcf", 'w', header=vcf_in.header)
 
+    # Write records in batches to avoid memory overload
     for record in vcf_in:
         if record.chrom == chromosome:
             position = record.pos
-            ancestral = df_exploded[df_exploded[1] == position]
-            if not ancestral.empty:
+            if position in position_to_ancestral:
+                ancestral = position_to_ancestral[position]
                 output_dict.append(position)
-                ancestral = ancestral[2].values[0]  # Extract the value of the second column
                 output_dict_anc.append(ancestral)
-                # For the output
-                if args.output_loci_dict:
-                    if ancestral != record.alts:
-                        output_dict_der.append(record.alts[0])
-                    if ancestral != record.ref:
-                        output_dict_der.append(record.ref)
-                if record.alts != ".":
-                    if ancestral == record.alts[0]:
-                        record.id = f"{record.id};Ancestral"
-                    else:
-                        record.id = f"{record.id};Derived"
-                elif record.alts == ".":
-                    if ancestral == record.ref:
-                        record.id = f"{record.id};Ancestral"
-                    else:
-                        record.id = f"{record.id};Derived"
+                
+                # Iterate over samples and update the record
+                for sample in record.samples:
+                    genotype = record.samples[sample]['GT']
+                    if genotype is not None:
+                        alleles = [record.ref] + list(record.alts)
+                        allele = [alleles[g] if g is not None else '.' for g in genotype]
+                        
+                        if allele[0] != ancestral:
+                            record.id = f"{record.id};Derived"
+                            output_dict_der.append(allele[0])
+                        elif allele[0] == ancestral:
+                            record.id = f"{record.id};Ancestral"
+                
                 vcf_out.write(record)
             else:
                 vcf_out.write(record)
@@ -81,6 +84,7 @@ def process_vcf_file(vcf_file, chromosome, df_exploded, output_dict, output_dict
     vcf_in.close()
     vcf_out.close()
     print(f"Finished processing {vcf_file}")
+
 
 def main(args, input_folder, chromosome, df_exploded):
     if args.input_single_vcf:
@@ -90,7 +94,6 @@ def main(args, input_folder, chromosome, df_exploded):
 
         # Use glob to find all .vcf files in the folder
         vcf_files = glob.glob(os.path.join(input_folder, '*.vcf'))
-
         # Check if any .vcf files were found
         if not vcf_files:
             print(f"No .vcf files found in the directory '{input_folder}'.")
@@ -98,32 +101,34 @@ def main(args, input_folder, chromosome, df_exploded):
             print(f"Found the following .vcf files in '{input_folder}':")
             for vcf_file in vcf_files:
                 print(vcf_file)
+            
+            # Prepare the ancestral dictionary for fast lookup
+            position_to_ancestral = dict(zip(df_exploded['pos'], df_exploded['anc']))
+            
+            # Use Manager to handle shared data across processes
+            with Manager() as manager:
+                output_dict = manager.list()
+                output_dict_anc = manager.list()
+                output_dict_der = manager.list()
 
-            # Prepare the output lists
-            output_dict = []
-            output_dict_anc = []
-            output_dict_der = []
+                # Use ProcessPoolExecutor to process files in parallel
+                with concurrent.futures.ProcessPoolExecutor() as executor:
+                    futures = [
+                        executor.submit(process_vcf_file, vcf_file, chromosome, position_to_ancestral, output_dict, output_dict_anc, output_dict_der, args)
+                        for vcf_file in vcf_files
+                    ]
+                    # Wait for all processes to complete
+                    concurrent.futures.wait(futures)
 
-            # Use ThreadPoolExecutor to process files in parallel
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                # Pass arguments to process_vcf_file function and start processing in parallel
-                futures = [
-                    executor.submit(process_vcf_file, vcf_file, chromosome, df_exploded, output_dict, output_dict_anc, output_dict_der, args)
-                    for vcf_file in vcf_files
-                ]
-                # Wait for all threads to complete
-                concurrent.futures.wait(futures)
-
-            # Process the loci dictionary if requested
-            if args.output_loci_dict:
-                print(f"Successfully generated output file with Y-ARS recognized loci and ancestral/derived alleles (-output_loci_dict).")
-                output_loci_dict_df = pd.DataFrame()
-                output_loci_dict_df[f"loci_{args.reference}"] = output_dict
-                output_loci_dict_df[f"ancestral"] = output_dict_anc
-                output_loci_dict_df[f"derived"] = output_dict_der
-                output_loci_dict_df = output_loci_dict_df.drop_duplicates()
-                output_loci_dict_df = output_loci_dict_df.sort_values(by=f"loci_{args.reference}")
-                output_loci_dict_df.to_csv("output_loci_dict.csv", sep="\t", index=False)
+                # Process the loci dictionary if requested
+                if args.output_loci_dict:
+                    print(f"Successfully generated output file with Y-ARS recognized loci and ancestral/derived alleles (-output_loci_dict).")
+                    output_loci_dict_df = pd.DataFrame({
+                        f"loci_{args.reference}": list(output_dict),
+                        "ancestral": list(output_dict_anc),
+                        "derived": list(output_dict_der)
+                    }).drop_duplicates().sort_values(by=f"loci_{args.reference}")
+                    output_loci_dict_df.to_csv("output_loci_dict.csv", sep="\t", index=False)
 
     
 #Single VCF file approach
