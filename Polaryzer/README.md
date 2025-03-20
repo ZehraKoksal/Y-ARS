@@ -1,5 +1,6 @@
-#### POLARYZER
+## POLARYZER
 Accesses the Y-ARS to identify the polarization of alleles (i.e. , ancestral versus derived alleles) of variants reported in vcf files.
+
 
 ### 1) Installation
 Operating system: Linux
@@ -10,6 +11,7 @@ git clone git@github.com:ZehraKoksal/Y-ARS.git
 cd Y-ARS/Polaryzer/
 python polarYzer.py -h
 ```
+
 
 
 ### 2) Requirements and Commands
@@ -31,10 +33,13 @@ numpy v2.2.4, cyvcf2 v0.31.1, pandas v2.2.3, pysam v0.23.0, pyarrow v19.0.1
 
 Now the environment is prepared to run polaryzer!
 
+
+
 ### 3) Run polaryzer
 Polaryzer can be applied to single sample vcf files and multisample vcf files. The first results in an annotated vcf file with the polarization (ancestral/derived) in the ID column. For the latter, a tab-separated .csv file is generated with samples in columns and loci in rows.
 
 It is important that vcf files have correct headers to be recognized as vcf files by polaryzer!
+
 
 #### a) Single sample vcf input file
 When running polaryzer on single sample vcf files, the user needs to specify the exact name of the Y chromosome used in the CHR column of the vcf file using parameter **-chromosome**, defining the reference sequence for alignment/in SNP array among GRCh37, GRCh38 or T2T following **-reference**. Define the path to the folder containing all .vcf files following parameter **-input_single_vcf**.
@@ -49,6 +54,7 @@ python polarYzer.py -chromosome NC_060948.1 -reference T2T -input_single_vcf vcf
 
 The single sample vcf file mode is run in parallel mode to reduce computing time.
 
+
 #### b) Multi sample vcf input file
 When running polaryzer on **one** multiple sample vcf file, the user needs to specify the exact name of the Y chromosome used in the CHR column of the vcf file using parameter **-chromosome**, defining the reference sequence for alignment/in SNP array among GRCh37, GRCh38 or T2T following **-reference**. Define the path to the vcf file following parameter **-multiple_sample_vcf**.
 ```
@@ -56,8 +62,6 @@ python polarYzer.py -chromosome NC_060948.1 -reference T2T -multi_sample_vcf mul
 ```
 
 The resulting output file is a tab-separated .csv file with loci being different rows, and the samples different columns. 
-
-
 
 
 #### c) Example files
@@ -70,6 +74,8 @@ Different test vcf files from the 1000 Genomes Project for inputs in the **singl
 More information on the software are available in [our publication:]()
 
 For reporting bugs, comments or questions, you are welcome to contact zehra.koksal@liu.se
+
+
 
 ### 5) Referencing
 
