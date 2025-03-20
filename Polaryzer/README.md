@@ -33,6 +33,7 @@ Now the environment is prepared to run polaryzer!
 
 ### 3) Run polaryzer
 Polaryzer can be applied to single sample vcf files and multisample vcf files. The first results in an annotated vcf file with the polarization (ancestral/derived) in the ID column. For the latter, a tab-separated .csv file is generated with samples in columns and loci in rows.
+
 It is important that vcf files have correct headers to be recognized as vcf files by polaryzer!
 
 #### a) Single sample vcf input file
