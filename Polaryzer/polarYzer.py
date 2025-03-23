@@ -1,3 +1,4 @@
+from cyvcf2 import VCF, Writer
 import argparse
 import os
 import glob
@@ -16,6 +17,8 @@ parser.add_argument('-multi_sample_vcf', type=str, required=False,
                     help='Path to multisample vcf file in .vcf file.')
 parser.add_argument('-output_loci_dict', action='store_true', required=False,
                     help='If specified, will print all loci and ancestral/derived alleles if available in Y-ARS for single sample vcfs.')
+parser.add_argument('-output', type=str, required=False,
+                    help='Define folder to save output files. If not defined, uses directory of polaryzer script.')
 
 
 def revert_delta_encoding(delta_encoded_list):
@@ -45,6 +48,18 @@ elif args.reference == "T2T":
     t2t[1] = t2t[1].apply(revert_delta_encoding)
     df_exploded = t2t.explode(1)
 
+
+if args.output != None:
+    if not os.path.exists(args.output):
+        print(f"output directory {args.output} does not exist and will be created.")
+        # Create the directory if it doesn't exist
+        os.makedirs(args.output)
+        print(f"Directory '{args.output}' was created.")
+    else:
+        print(f"Directory '{args.output}' exists for storing polaryzer output.")
+
+
+
 df_exploded.columns=["anc","pos"]
 print(df_exploded)
 print(df_exploded.columns)
@@ -53,8 +68,13 @@ print(df_exploded.columns)
 def process_vcf_file(vcf_file, chromosome, position_to_ancestral, output_dict, output_dict_anc, output_dict_der, args):
     vcf_in = pysam.VariantFile(vcf_file, 'r')
     modified_filename = vcf_file.replace(".vcf", "")
-    vcf_out = pysam.VariantFile(f"{modified_filename}_polarized.vcf", 'w', header=vcf_in.header)
-
+    out_vcf_path = f"{modified_filename}_polarized.vcf"
+    if args.output != None:
+        modified_filename = modified_filename.rsplit('/', 1)[-1]
+        out_vcf_path = f"{args.output}/{modified_filename}_polarized.vcf"
+    print(out_vcf_path)
+    # print(out_vcf_path)
+    vcf_out = pysam.VariantFile(out_vcf_path, 'w', header=vcf_in.header)
     # Write records in batches to avoid memory overload
     for record in vcf_in:
         if record.chrom == chromosome:
@@ -88,49 +108,62 @@ def process_vcf_file(vcf_file, chromosome, position_to_ancestral, output_dict, o
 
 def main(args, input_folder, chromosome, df_exploded):
     if args.input_single_vcf:
-        # Check if the folder exists
-        if not os.path.isdir(input_folder):
-            raise ValueError(f"The folder '{input_folder}' does not exist.")
-
-        # Use glob to find all .vcf files in the folder
-        vcf_files = glob.glob(os.path.join(input_folder, '*.vcf'))
-        # Check if any .vcf files were found
-        if not vcf_files:
-            print(f"No .vcf files found in the directory '{input_folder}'.")
+        if args.input_single_vcf.endswith(".vcf"):
+            # print("Single vcf file recognized.")
+            vcf_files = []
+            vcf_files.append(args.input_single_vcf)
+            print(vcf_files)
         else:
-            print(f"Found the following .vcf files in '{input_folder}':")
-            for vcf_file in vcf_files:
-                print(vcf_file)
-            
-            # Prepare the ancestral dictionary for fast lookup
-            position_to_ancestral = dict(zip(df_exploded['pos'], df_exploded['anc']))
-            
-            # Use Manager to handle shared data across processes
-            with Manager() as manager:
-                output_dict = manager.list()
-                output_dict_anc = manager.list()
-                output_dict_der = manager.list()
+            # Check if the folder exists
+            if not os.path.isdir(input_folder):
+                raise ValueError(f"The folder '{input_folder}' does not exist.")
 
-                # Use ProcessPoolExecutor to process files in parallel
-                with concurrent.futures.ProcessPoolExecutor() as executor:
-                    futures = [
-                        executor.submit(process_vcf_file, vcf_file, chromosome, position_to_ancestral, output_dict, output_dict_anc, output_dict_der, args)
-                        for vcf_file in vcf_files
-                    ]
-                    # Wait for all processes to complete
-                    concurrent.futures.wait(futures)
+            # Use glob to find all .vcf files in the folder
+            vcf_files = glob.glob(os.path.join(input_folder, '*.vcf'))
+            print(vcf_files)
+            # Check if any .vcf files were found
+            if not vcf_files:
+                print(f"No .vcf files found in the directory '{input_folder}'.")
+            else:
+                print(f"Found the following .vcf files in '{input_folder}':")
+       
+                
+        for vcf_file in vcf_files:
+            print(vcf_file)
+        
+        # Prepare the ancestral dictionary for fast lookup
+        position_to_ancestral = dict(zip(df_exploded['pos'], df_exploded['anc']))
+        
+        # Use Manager to handle shared data across processes
+        with Manager() as manager:
+            output_dict = manager.list()
+            output_dict_anc = manager.list()
+            output_dict_der = manager.list()
 
-                # Process the loci dictionary if requested
-                if args.output_loci_dict:
-                    print(f"Successfully generated output file with Y-ARS recognized loci and ancestral/derived alleles (-output_loci_dict).")
-                    output_loci_dict_df = pd.DataFrame({
-                        f"loci_{args.reference}": list(output_dict),
-                        "ancestral": list(output_dict_anc),
-                        "derived": list(output_dict_der)
-                    }).drop_duplicates().sort_values(by=f"loci_{args.reference}")
-                    output_loci_dict_df.to_csv("output_loci_dict.csv", sep="\t", index=False)
+            # Use ProcessPoolExecutor to process files in parallel
+            with concurrent.futures.ProcessPoolExecutor() as executor:
+                futures = [
+                    executor.submit(process_vcf_file, vcf_file, chromosome, position_to_ancestral, output_dict, output_dict_anc, output_dict_der, args)
+                    for vcf_file in vcf_files
+                ]
+                # Wait for all processes to complete
+                concurrent.futures.wait(futures)
 
-    
+            # Process the loci dictionary if requested
+            if args.output_loci_dict:
+                print(f"Successfully generated output file with Y-ARS recognized loci and ancestral/derived alleles (-output_loci_dict).")
+                output_loci_dict_df = pd.DataFrame({
+                    f"loci_{args.reference}": list(output_dict),
+                    "ancestral": list(output_dict_anc),
+                    "derived": list(output_dict_der)
+                }).drop_duplicates().sort_values(by=f"loci_{args.reference}")
+
+                if args.output != None:
+                    output_loci_dict_df.to_csv(f'{args.output}/output_loci_dict.csv', sep="\t", index=False)
+                else:
+                    output_loci_dict_df.to_csv('output_loci_dict.csv', sep="\t", index=False)
+
+
 #Single VCF file approach
 if args.input_single_vcf:
     # Argument parsing
@@ -180,7 +213,10 @@ elif args.multi_sample_vcf:
             pos_entry.append(pos_derived_allele)
             output.loc[len(output)] = pos_entry
     print(output)
-    output.to_csv("polaryzer_output.csv", sep="\t", index=False)
+    if args.output != None:
+        output.to_csv(f'{args.output}/polaryzer_output.csv', sep="\t", index=False)
+    else:
+        output.to_csv('polaryzer_output.csv', sep="\t", index=False)
     vcf_in.close()
     print(f"Finished processing {args.multi_sample_vcf}")
 
