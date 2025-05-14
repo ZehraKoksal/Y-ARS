@@ -7,7 +7,7 @@ Operating system: Linux
 
 Type in the shell:
 ```
-git clone git@github.com:ZehraKoksal/Y-ARS.git
+git clone https://github.com/ZehraKoksal/Y-ARS.git
 cd Y-ARS/Polaryzer/
 python polarYzer.py -h
 ```
