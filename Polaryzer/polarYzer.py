@@ -62,7 +62,6 @@ if args.output != None:
 
 df_exploded.columns=["anc","pos"]
 print(df_exploded)
-print(df_exploded.columns)
 
 
 def process_vcf_file(vcf_file, chromosome, position_to_ancestral, output_dict, output_dict_anc, output_dict_der, args):
@@ -73,7 +72,6 @@ def process_vcf_file(vcf_file, chromosome, position_to_ancestral, output_dict, o
         modified_filename = modified_filename.rsplit('/', 1)[-1]
         out_vcf_path = f"{args.output}/{modified_filename}_polarized.vcf"
     print(out_vcf_path)
-    # print(out_vcf_path)
     vcf_out = pysam.VariantFile(out_vcf_path, 'w', header=vcf_in.header)
     # Write records in batches to avoid memory overload
     for record in vcf_in:
@@ -87,11 +85,13 @@ def process_vcf_file(vcf_file, chromosome, position_to_ancestral, output_dict, o
                 # Iterate over samples and update the record
                 for sample in record.samples:
                     genotype = record.samples[sample]['GT']
+                    print(genotype)
                     if genotype is not None:
                         alleles = [record.ref] + list(record.alts)
                         allele = [alleles[g] if g is not None else '.' for g in genotype]
-                        
-                        if allele[0] != ancestral:
+                        if allele[0] == ".":
+                            record.id = f"{record.id};Missing data"
+                        elif allele[0] != ancestral:
                             record.id = f"{record.id};Derived"
                             output_dict_der.append(allele[0])
                         elif allele[0] == ancestral:
@@ -100,6 +100,7 @@ def process_vcf_file(vcf_file, chromosome, position_to_ancestral, output_dict, o
                 vcf_out.write(record)
             else:
                 vcf_out.write(record)
+                print(f"Position {position} is not in Reference Sequence and will therefore not be annotated with polarization. Please check if the position is correct. If you are using GRCh37 or GRCh38-aligned variants, consider lifting over to T2T first and then repeating polaryzer.")
 
     vcf_in.close()
     vcf_out.close()
@@ -183,17 +184,19 @@ elif args.multi_sample_vcf:
             pos_derived_allele = []
             pos_entry.append(chromosome)
             pos_entry.append(position)
-            ancestral = df_exploded[df_exploded[1] == position]
+            ancestral = df_exploded[df_exploded["pos"] == position]
             if not ancestral.empty:
                 output_dict.append(position)
-                ancestral = ancestral[2].values[0]  # Extract the value of the second column
+                ancestral = ancestral["anc"].values[0]  # Extract the value of the second column / ancestral allele
                 for sample in record.samples:
                     # Get the genotype (GT) field for the current sample
                     genotype = record.samples[sample]['GT']
                     if genotype is not None:
                         alleles = [record.ref] + list(record.alts)  # List of alleles (ref + alts)
                         allele = [alleles[g] if g is not None else '.' for g in genotype]
-                        if allele[0] != ancestral:
+                        if allele[0] == ".":
+                            pos_entry.append("Missing data")
+                        elif allele[0] != ancestral:
                             pos_entry.append("Derived")
                             pos_derived_allele.append(allele[0])
                         elif allele[0] == ancestral:
@@ -201,7 +204,7 @@ elif args.multi_sample_vcf:
                     else:
                         pos_entry.append(".")
             else:
-                pos_entry.append("-") #for ancestral
+                print(f"{position} is not on Y chromosome reference. Check if the position is correct.")
                 for sample in record.samples:
                     pos_entry.append("-")
                 ancestral = "-"
