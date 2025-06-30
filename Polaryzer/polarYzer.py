@@ -7,6 +7,10 @@ import pysam
 import concurrent.futures
 from multiprocessing import Manager
 
+print()
+print("Starting polarYzer v1.1 ...")
+print()
+
 parser = argparse.ArgumentParser()
 parser.add_argument('-chromosome', type=str, required=True, help='Label of Y chromosome in the vcf file. Can be "chrY", "Y" or e.g. "NC_000024.9" for the GRCh37')
 parser.add_argument('-reference', type=str, choices=['T2T', 'GRCh37','GRCh38'], required=True,
@@ -36,6 +40,11 @@ output_dict = []
 output_dict_anc = []
 output_dict_der = []
 
+#Load uncertainty score table for the used reference sequence and convert to dictionary with pos and unc score
+UncMet = pd.read_csv(f"UncMet_{args.reference}.csv", sep="\t")
+position_to_value = dict(zip(UncMet.iloc[:, 1], UncMet.iloc[:, 2]))
+UncMet.columns=["CHR","POS","UNC"]
+
 #Load the dictionaries
 if args.reference == "GRCh37":
     grch37 = pd.read_parquet('grch37_dictionary.parquet', engine='pyarrow')
@@ -57,11 +66,8 @@ if args.output != None:
         print(f"Directory '{args.output}' was created.")
     else:
         print(f"Directory '{args.output}' exists for storing polaryzer output.")
-
-
-
 df_exploded.columns=["anc","pos"]
-print(df_exploded)
+# print(df_exploded)
 
 
 def process_vcf_file(vcf_file, chromosome, position_to_ancestral, output_dict, output_dict_anc, output_dict_der, args):
@@ -81,26 +87,30 @@ def process_vcf_file(vcf_file, chromosome, position_to_ancestral, output_dict, o
                 ancestral = position_to_ancestral[position]
                 output_dict.append(position)
                 output_dict_anc.append(ancestral)
-                
+                output_dict_der.append("-") #try
                 # Iterate over samples and update the record
                 for sample in record.samples:
                     genotype = record.samples[sample]['GT']
-                    print(genotype)
+                    # print(genotype)
                     if genotype is not None:
                         alleles = [record.ref] + list(record.alts)
                         allele = [alleles[g] if g is not None else '.' for g in genotype]
-                        if allele[0] == ".":
-                            record.id = f"{record.id};Missing data"
-                        elif allele[0] != ancestral:
+                        if allele[0] != ancestral:
                             record.id = f"{record.id};Derived"
-                            output_dict_der.append(allele[0])
+                            output_dict_der[-1] = allele[0]
+                            # output_dict_der.append(allele[0])
+                        elif allele[0] == ".":
+                            record.id = f"{record.id};Missing data"  
                         elif allele[0] == ancestral:
                             record.id = f"{record.id};Ancestral"
-                
+                #Add Unc Metrics to vcf file column ID
+                if position in position_to_value:
+                    value = position_to_value[position] 
+                    record.id = f"{record.id},UNC={value}"
                 vcf_out.write(record)
             else:
                 vcf_out.write(record)
-                print(f"Position {position} is not in Reference Sequence and will therefore not be annotated with polarization. Please check if the position is correct. If you are using GRCh37 or GRCh38-aligned variants, consider lifting over to T2T first and then repeating polaryzer.")
+                print(f"Position {position} can't be lifted over to Y-ARS and will not be annotated with polarization. This is common for GRCh37/GRCh38-aligned data.")
 
     vcf_in.close()
     vcf_out.close()
@@ -113,6 +123,7 @@ def main(args, input_folder, chromosome, df_exploded):
             # print("Single vcf file recognized.")
             vcf_files = []
             vcf_files.append(args.input_single_vcf)
+            print(f"Found the following .vcf files in '{input_folder}':")
             print(vcf_files)
         else:
             # Check if the folder exists
@@ -121,16 +132,19 @@ def main(args, input_folder, chromosome, df_exploded):
 
             # Use glob to find all .vcf files in the folder
             vcf_files = glob.glob(os.path.join(input_folder, '*.vcf'))
+            print(f"Found the following .vcf files in '{input_folder}':")
             print(vcf_files)
             # Check if any .vcf files were found
             if not vcf_files:
                 print(f"No .vcf files found in the directory '{input_folder}'.")
-            else:
-                print(f"Found the following .vcf files in '{input_folder}':")
+            # else:
+                # print(f"Found the following .vcf files in '{input_folder}':")
+                # a = 1
        
                 
         for vcf_file in vcf_files:
-            print(vcf_file)
+            a = 1 #filler
+            # print(vcf_file)
         
         # Prepare the ancestral dictionary for fast lookup
         position_to_ancestral = dict(zip(df_exploded['pos'], df_exploded['anc']))
@@ -158,7 +172,14 @@ def main(args, input_folder, chromosome, df_exploded):
                     "ancestral": list(output_dict_anc),
                     "derived": list(output_dict_der)
                 }).drop_duplicates().sort_values(by=f"loci_{args.reference}")
-
+                print(output_loci_dict_df)
+                
+                #Add uncertainty score to output_loci_dict_df
+                # Merge output_loci_dict dataframe and information on their uncertainty scores
+                merge_column_df1 =  f"loci_{args.reference}"
+                output_loci_dict_df = pd.merge(output_loci_dict_df, UncMet, left_on=merge_column_df1, right_on="POS", how="left")
+                output_loci_dict_df = output_loci_dict_df.drop(columns=["CHR","POS"])
+                
                 if args.output != None:
                     output_loci_dict_df.to_csv(f'{args.output}/output_loci_dict.csv', sep="\t", index=False)
                 else:
@@ -216,13 +237,19 @@ elif args.multi_sample_vcf:
             pos_entry.append(pos_derived_allele)
             output.loc[len(output)] = pos_entry
     print(output)
+    #merge with uncertainty metric
+    output = pd.merge(output, UncMet, left_on="pos", right_on="POS", how="left")
+    output = output.drop(columns=["CHR","POS"])
+    
     if args.output != None:
         output.to_csv(f'{args.output}/polaryzer_output.csv', sep="\t", index=False)
     else:
         output.to_csv('polaryzer_output.csv', sep="\t", index=False)
     vcf_in.close()
+    print()
     print(f"Finished processing {args.multi_sample_vcf}")
 
 else:
     print("No input vcf file was provided! Polaryzer aborted. Please provide path to vcf folder with several singel vcf files (-input_single_vcf) or path to a multi sample vcf file (-multi_sample_vcf).")
+print()
 print("Finished polarizing")
