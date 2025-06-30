@@ -236,10 +236,11 @@ elif args.multi_sample_vcf:
             pos_entry.append(ancestral)
             pos_entry.append(pos_derived_allele)
             output.loc[len(output)] = pos_entry
-    print(output)
+    
     #merge with uncertainty metric
     output = pd.merge(output, UncMet, left_on="pos", right_on="POS", how="left")
     output = output.drop(columns=["CHR","POS"])
+    print(output)
     
     if args.output != None:
         output.to_csv(f'{args.output}/polaryzer_output.csv', sep="\t", index=False)
