@@ -11,7 +11,7 @@ git clone https://github.com/ZehraKoksal/Y-ARS.git
 cd Y-ARS/Polaryzer/
 python polarYzer.py -h
 ```
-
+<br><br>
 
 
 ### 2) Requirements and Commands
@@ -34,13 +34,13 @@ numpy v2.2.4, cyvcf2 v0.31.1, pandas v2.2.3, pysam v0.23.0, pyarrow v19.0.1
 Now the environment is prepared to run polaryzer!
 
 
-
+<br><br>
 ### 3) Run polaryzer
 Polaryzer can be applied to single sample vcf files and multisample vcf files. The first results in an annotated vcf file with the polarization (ancestral/derived) in the ID column. For the latter, a tab-separated .csv file is generated with samples in columns and loci in rows.
 
 It is important that vcf files have correct headers to be recognized as vcf files by polaryzer!
 
-
+<br><br>
 #### a) Single sample vcf input file
 When running polaryzer on single sample vcf files, the user needs to specify the exact name of the Y chromosome used in the CHR column of the vcf file using parameter **-chromosome**, defining the reference sequence for alignment/in SNP array among GRCh37, GRCh38 or T2T following **-reference**. Define the path to a single vcf file OR the folder containing several vcf files following parameter **-input_single_vcf**. 
 
@@ -55,7 +55,7 @@ The resulting vcf files (named "_polarized.vcf") will be annotated in the ID col
 
 ![Multi sample vcf output file](images/Single_sample_vcf.png)
 
-
+<br><br>
 Optionally, the parameter **-output_loci_dict** can be added to obtain a tab-separated csv file containing all loci and the ancestral and derived allele information over all vcf files.
 ```
 python polarYzer.py -chromosome NC_060948.1 -reference T2T -input_single_vcf vcf_T2T_test/ -output_loci_dict
@@ -70,7 +70,7 @@ python polarYzer.py -chromosome NC_060948.1 -reference T2T -input_single_vcf vcf
 
 The single sample vcf file mode is run in parallel mode to reduce computing time.
 
-
+<br><br>
 #### b) Multi sample vcf input file
 When running polaryzer on **one** multiple sample vcf file, the user needs to specify the exact name of the Y chromosome used in the CHR column of the vcf file using parameter **-chromosome**, defining the reference sequence for alignment/in SNP array among GRCh37, GRCh38 or T2T following **-reference**. Define the path to the vcf file following parameter **-multiple_sample_vcf**.
 ```
@@ -82,13 +82,13 @@ The resulting output table presents the different loci in different rows (see im
 ![Multi sample vcf output file](images/Multi_sample_output.png)
 
 The output file will by default be stored in the same folder as the input vcf file. The user can customize the output folder by defining the path to the output folder following **-output**. If the output folder does not exist already, it will be automatically created.
-
+<br><br>
 #### c) Example files
 
 Different test vcf files from the 1000 Genomes Project for inputs in the **single sample vcf file mode** of the three reference genomes are available in the [subfolder example_vcfs](https://github.com/ZehraKoksal/Y-ARS/tree/main/Polaryzer/example_vcfs)
 
 
-
+<br><br>
 ### 4) Additional Information and Contact
 More information on the software are available in [our publication:]()
 
