@@ -59,7 +59,7 @@ The modified vcf files will by default be stored in the same folder as the input
 ```
 python polarYzer.py -chromosome NC_060948.1 -reference T2T -input_single_vcf vcf_T2T_test/ -output_loci_dict -output ./output
 ```
-![Alt text](images/Multi_sample_output.png)
+
 
 The single sample vcf file mode is run in parallel mode to reduce computing time.
 
@@ -70,8 +70,9 @@ When running polaryzer on **one** multiple sample vcf file, the user needs to sp
 python polarYzer.py -chromosome NC_060948.1 -reference T2T -multi_sample_vcf multisample_vcf_t2t.vcf
 ```
 
-The resulting output file is a tab-separated .csv file with loci being different rows, and the samples different columns. 
+The resulting output table presents the different loci in different rows (see image below). The columns present different samples, followed by the ancestral and derived allele. The last column (UNC) contains the uncertainty score for sites that were part of the ancestral state reconstruction. A score close to 0 indicates a higher reliability, while a score close to 1 indicates lower reliability due to high mutability or high missingness at this site. In the output table, sites that do not contain an uncertainty score did not show to be polymorphic among the major haplogroups during our ancestral state reconstruction and thus likely have a high reliability. The resulting output table is saved as .csv file.
 
+![Multi sample vcf output file](images/Multi_sample_output.png)
 
 The output file will by default be stored in the same folder as the input vcf file. The user can customize the output folder by defining the path to the output folder following **-output**. If the output folder does not exist already, it will be automatically created.
 
