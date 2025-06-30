@@ -59,7 +59,7 @@ The modified vcf files will by default be stored in the same folder as the input
 ```
 python polarYzer.py -chromosome NC_060948.1 -reference T2T -input_single_vcf vcf_T2T_test/ -output_loci_dict -output ./output
 ```
-
+![Alt text](images/Multi_sample_output.png)
 
 The single sample vcf file mode is run in parallel mode to reduce computing time.
 
@@ -71,6 +71,8 @@ python polarYzer.py -chromosome NC_060948.1 -reference T2T -multi_sample_vcf mul
 ```
 
 The resulting output file is a tab-separated .csv file with loci being different rows, and the samples different columns. 
+
+
 The output file will by default be stored in the same folder as the input vcf file. The user can customize the output folder by defining the path to the output folder following **-output**. If the output folder does not exist already, it will be automatically created.
 
 #### c) Example files
