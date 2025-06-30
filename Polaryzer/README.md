@@ -49,6 +49,13 @@ When running polaryzer on single sample vcf files, the user needs to specify the
 ```
 python polarYzer.py -chromosome NC_060948.1 -reference T2T -input_single_vcf vcf_T2T_test/
 ```
+
+The resulting vcf files (named "_polarized.vcf") will be annotated in the ID column. As visible below, previous annotations in the ID column will be supplemented with the allelic state of the allele in the sample, followed by the uncertainty score (UNC) representing the reliability of the reconstructed ancestral allele and therefore the annotated allele polarization. A score close to 0 indicates a higher reliability, while a score close to 1 indicates lower reliability due to high mutability or high missingness at this site. Sites without an UNC score likely have a high reliability. They simply do not contain a score, because these sites had not been part of the ancestral state reconstruction, as they were not polymorphic among the major haplogroups during our ancestral state reconstruction.
+
+
+![Multi sample vcf output file](images/Single_sample_vcf.png)
+
+
 Optionally, the parameter **-output_loci_dict** can be added to obtain a tab-separated csv file containing all loci and the ancestral and derived allele information over all vcf files.
 ```
 python polarYzer.py -chromosome NC_060948.1 -reference T2T -input_single_vcf vcf_T2T_test/ -output_loci_dict
