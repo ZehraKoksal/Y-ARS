@@ -12,7 +12,7 @@ All notable changes to this project will be documented here.
 - Recognition and annotation of missing data in vcf files
 
 ### Changed
-- Updated Y-ARS Sequence (Y-ARS v1.1) upon consultation of long-read primate data for ancestral state recosnutrction. (There are differences in the alleles compared to version 1.0)
+- Updated Y-ARS Sequence (Y-ARS v1.1) upon consultation of long-read primate data for ancestral state reconstruction. (There are differences in the alleles compared to version 1.0)
 
 ---
 
