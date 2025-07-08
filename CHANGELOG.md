@@ -5,7 +5,7 @@ All notable changes to this project will be documented here.
 ## [v1.1] – 2025-06-30
 ### Added
 - Added warning message for positions not present in the reference sequence.
-- Added uncertainty scores for reconstructed alleles: UNC values close to 0 present higher confidence of the reconsutrcted ancestral allele, values close to 1 present lower confidence of the ancestral allele, due to mutability and/or lack of data during Ancestral State Reconstruction. 
+- Added uncertainty scores for reconstructed alleles: UNC values close to 0 present higher confidence of the reconstructed ancestral allele, values close to 1 present lower confidence of the ancestral allele, due to mutability and/or lack of data during Ancestral State Reconstruction. 
   
 ### Fixed
 - Corrected column reference to fix script failure when generating output file of multi-sample vcf files. (Thank you, Zhiyong Wang for the bug report!)
