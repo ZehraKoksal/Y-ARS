@@ -67,7 +67,6 @@ if args.output != None:
     else:
         print(f"Directory '{args.output}' exists for storing polaryzer output.")
 df_exploded.columns=["anc","pos"]
-# print(df_exploded)
 
 
 def process_vcf_file(vcf_file, chromosome, position_to_ancestral, output_dict, output_dict_anc, output_dict_der, args):
@@ -77,7 +76,7 @@ def process_vcf_file(vcf_file, chromosome, position_to_ancestral, output_dict, o
     if args.output != None:
         modified_filename = modified_filename.rsplit('/', 1)[-1]
         out_vcf_path = f"{args.output}/{modified_filename}_polarized.vcf"
-    print(out_vcf_path)
+    # print(out_vcf_path)
     vcf_out = pysam.VariantFile(out_vcf_path, 'w', header=vcf_in.header)
     # Write records in batches to avoid memory overload
     for record in vcf_in:
@@ -91,14 +90,12 @@ def process_vcf_file(vcf_file, chromosome, position_to_ancestral, output_dict, o
                 # Iterate over samples and update the record
                 for sample in record.samples:
                     genotype = record.samples[sample]['GT']
-                    # print(genotype)
                     if genotype is not None:
-                        alleles = [record.ref] + list(record.alts)
+                        alleles = [record.ref] + list(record.alts or [])
                         allele = [alleles[g] if g is not None else '.' for g in genotype]
                         if allele[0] != ancestral:
                             record.id = f"{record.id};Derived"
                             output_dict_der[-1] = allele[0]
-                            # output_dict_der.append(allele[0])
                         elif allele[0] == ".":
                             record.id = f"{record.id};Missing data"  
                         elif allele[0] == ancestral:
@@ -111,7 +108,6 @@ def process_vcf_file(vcf_file, chromosome, position_to_ancestral, output_dict, o
             else:
                 vcf_out.write(record)
                 print(f"Position {position} can't be lifted over to Y-ARS and will not be annotated with polarization. This is common for GRCh37/GRCh38-aligned data.")
-
     vcf_in.close()
     vcf_out.close()
     print(f"Finished processing {vcf_file}")
