@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented here.
 
+### Fixed
+- Bug was fixed that was disrupting script when using single-sample vcf files
+
+  
 ## [v1.1] – 2025-06-30
 ### Added
 - Added warning message for positions not present in the reference sequence.
