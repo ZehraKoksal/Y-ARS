@@ -96,7 +96,7 @@ Different test vcf files from the 1000 Genomes Project for inputs in the **singl
 
 <br><br>
 ### 4) Additional Information and Contact
-More information on the software are available in [our publication:]()
+More information on the software are available in [our publication:](https://academic.oup.com/mbe/advance-article/doi/10.1093/molbev/msaf222/8252812?searchresult=1)
 
 For reporting bugs, comments or questions, you are welcome to contact zehra.koksal@liu.se
 
@@ -104,6 +104,6 @@ For reporting bugs, comments or questions, you are welcome to contact zehra.koks
 <br><br>
 ### 5) Referencing
 
-Please cite: 
+Please cite: Zehra Köksal, Annina Preussner, Jaakko Leinonen, Taru Tukiainen, Introducing the Y-chromosomal ancestral-like reference sequence - Improving the capture of human evolutionary information, Molecular Biology and Evolution, 2025;, msaf222, https://doi.org/10.1093/molbev/msaf222
 
 
